@@ -2,6 +2,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+//My imports
+import java.util.Deque;
+import java.util.ArrayDeque;
 
 
 public class Build {
@@ -14,6 +17,36 @@ public class Build {
    * @param k the maximum word length (exclusive)
    */
   public static void printShortWords(Vertex<String> vertex, int k) {
+    if(vertex == null) {
+      return;
+    }
+    if(vertex.neighbors.isEmpty()) {
+      if(vertex.data.length() < k) {
+        System.out.println(vertex.data);
+      }
+      return;
+    }
+
+    Deque<Vertex<String>> deq = new ArrayDeque<>();
+    Set<Vertex<String>> seen = new HashSet<>();
+
+    deq.addFirst(vertex);
+    while(deq.size() > 0) {
+      Vertex<String> current = deq.removeFirst();
+
+      if(!seen.contains(current)) {
+        seen.add(current);
+
+        if(current.data.length() < k) {
+          System.out.println(current.data);
+        }
+
+        for(Vertex<String> neighbor : current.neighbors) {
+          deq.addFirst(neighbor);
+        }
+      }
+    }
+
   }
 
   /**
@@ -23,7 +56,38 @@ public class Build {
    * @return the longest reachable word, or an empty string if the vertex is null
    */
   public static String longestWord(Vertex<String> vertex) {
-    return "";
+    if(vertex == null) {
+      return "";
+    }
+    if(vertex.neighbors.isEmpty()) {
+      return vertex.data;
+    }
+
+    Deque<Vertex<String>> deq = new ArrayDeque<>();
+    Set<Vertex<String>> seen = new HashSet<>();
+
+    int maxLen = 0;
+    String ret = "";
+
+    deq.addFirst(vertex);
+    while(deq.size() > 0) {
+      Vertex<String> current = deq.removeFirst();
+
+      if(!seen.contains(current)) {
+        seen.add(current);
+
+        if(current.data.length() > maxLen) {
+          maxLen = current.data.length();
+          ret = current.data;
+        }
+
+        for(Vertex<String> neighbor : current.neighbors) {
+          deq.addFirst(neighbor);
+        }
+      }
+    }
+
+    return ret;
   }
 
   /**
@@ -34,6 +98,33 @@ public class Build {
    * @param <T> the type of values stored in the vertices
    */
   public static <T> void printSelfLoopers(Vertex<T> vertex) {
+    if(vertex == null) {
+      return;
+    }
+    if(vertex.neighbors.isEmpty()) {
+      return;
+    }
+
+    Deque<Vertex<T>> deq = new ArrayDeque<>();
+    Set<Vertex<T>> seen = new HashSet<>();
+
+    deq.addFirst(vertex);
+    while(deq.size() > 0) {
+      Vertex<T> current = deq.removeFirst();
+
+      if(!seen.contains(current)) {
+        seen.add(current);
+
+        if(current.neighbors.contains(current)) {
+          System.out.println(current.data);
+        }
+
+        for(Vertex<T> neighbor : current.neighbors) {
+          deq.addFirst(neighbor);
+        }
+      }
+    }
+
   }
 
   /**
@@ -45,6 +136,34 @@ public class Build {
    * @return true if the destination is reachable from the start, false otherwise
    */
   public static boolean canReach(Airport start, Airport destination) {
+    if(start == destination) {
+      //Seriously iffy here; I don't like comparisons that aren't .equals()
+      return true;
+    }
+    if(start.getOutboundFlights().isEmpty()) {
+      return false;
+    }
+
+    Deque<Airport> deq = new ArrayDeque<>();
+    Set<Airport> seen = new HashSet<>();
+
+    deq.addFirst(start);
+    while(deq.size() > 0) {
+      Airport current = deq.removeFirst();
+
+      if(current == destination) {
+        return true;
+      }
+
+      List<Airport> outbounds = current.getOutboundFlights();
+
+      if(!seen.contains(current)) {
+        seen.add(current);
+        for(Airport neighbor : outbounds) {
+          deq.addFirst(neighbor);
+        }
+      }
+    }
     return false;
   }
 
@@ -58,6 +177,30 @@ public class Build {
    * @return a set of values that cannot be reached from the starting value
    */
   public static <T> Set<T> unreachable(Map<T, List<T>> graph, T starting) {
-    return new HashSet<>();
+
+    Set<T> possible = graph.keySet();
+    if(!possible.contains(starting)) {
+      return possible;
+    }
+    if(graph.get(starting).isEmpty()) {
+      return possible;
+    }
+
+    Set<T> seen = new HashSet<>();
+    Deque<T> deq = new ArrayDeque<>();
+
+    deq.add(starting);
+    while(deq.size() > 0) {
+      T current = deq.removeFirst();
+      if(!seen.contains(current)) {
+        seen.add(current);
+        for(T elem : graph.get(current)) {
+          deq.addFirst(elem);
+        }
+      }
+    }
+    //possible intersection complement seen. 
+    possible.removeAll(seen);
+    return possible;
   }
 }
